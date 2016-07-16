@@ -15,13 +15,13 @@
 #include "CMMC_Blink.hpp"
 CMMC_Blink blinker;
 
-const char* ssid     = "ESPert";  // Change your ssid wifi 
+const char* ssid     = "ESPERT-3020";  // Change your ssid wifi 
 const char* password = "espertap";  // Change your password wifi
 
 // NETPIE.io : thing2thing
-#define APPID   "Hello"             // Change your appID
-#define KEY     ""       // Change your Key
-#define SECRET  "" // Change your SECRET
+#define APPID   "HelloCMMC"             // Change your appID
+#define KEY     "PK7fUciCu1ocVPE"       // Change your Key
+#define SECRET  "r2LOK4ambsj5H2eEEkBZ3vhyc" // Change your SECRET
 #define ALIAS   "thing2"              // Change your name
 
 #define LED 2

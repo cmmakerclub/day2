@@ -2,29 +2,31 @@
   Project  : NECTEC IoT Camp 2016
   Compiler : Arduino 1.6.7
   Board    : ESPresso Lite V2
-  Device   : Button
-  Dashboard : -
+  Device   : Soil moisture, RELAY module
+  Dashboard : Soil_dashboard
   Library : DHT-sensor-library, CMMC_Blink
   Author   : Chiang Mai Maker Club
 *******************************************************************************/
 
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <MicroGear.h>  // v 1.1.7
-#include "DHT.h"
 #include "CMMC_Blink.hpp"
 CMMC_Blink blinker;
 
 const char* ssid     = "ESPERT-3020";  // Change your ssid wifi 
 const char* password = "espertap";  // Change your password wifi
 
-// NETPIE.io : thing2thing
-#define APPID   "HelloCMMC"             // Change your appID
-#define KEY     "pP9dNKzZXxl0ezB"       // Change your Key
-#define SECRET  "vsPZEfLJCpD2pQfgTu9FXICb5" // Change your SECRET
-#define ALIAS   "thing1"              // Change your name
+#define APPID   "HelloNETPIE"             // Change your appID
+#define KEY     "xxxxxxxxxxx"             // Change your Key
+#define SECRET  "xxxxxxxxxxx"             // Change your SECRET
+#define ALIAS   "Soilsensor"           // Change your name
 
-#define LDR A0
+#define SOIL 13
+#define RELAY 14
+
+boolean soilState = false;
 
 WiFiClient client;
 MicroGear microgear(client);
@@ -43,15 +45,19 @@ void loop() {
   {
     microgear.loop();
 
-    if(analogRead(LDR) > 900)  {
-      delay(200);
-      microgear.chat("thing2", "ON");
+    // อ่านค่าจากเซ็นเซอร์ Soil moisture sensor
+    soilState = digitalRead(SOIL);
+    
+    if (soilState == true) {
+      // ส่งค่าไปยัง netpie.io
+      microgear.chat("SoilFreeboard/moisture", "DRY");
     } else {
-      microgear.chat("thing2", "OFF");
+      microgear.chat("SoilFreeboard/moisture", "WET");
     }
     
-    Serial.println(analogRead(LDR));
-    delay(500);
+    Serial.print("Soil moisture = ");
+    Serial.println(soilState);
+    delay(200);
   }
   else
   {
@@ -98,6 +104,17 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) {
 
   Serial.print("Topic is ");
   Serial.println(topic);
+
+  if (msgIN == "ON")
+  {
+    digitalWrite(RELAY, LOW);
+    delay(100);
+  }
+  else if (msgIN == "OFF")
+  {
+    digitalWrite(RELAY, HIGH);
+    delay(100);
+  }
 }
 
 /******************* initial loop ***********************************/
@@ -118,12 +135,11 @@ void init_wifi() {
       Serial.print(".");
     }
   }
-
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   blinker.blink(200, LED_BUILTIN);
-
+  
   Serial.println("connecting netpie.io...");
   //microgear.resetToken();
   microgear.init(KEY, SECRET, ALIAS);
@@ -133,5 +149,7 @@ void init_wifi() {
 }
 
 void init_hardware() {
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, HIGH);
 }
 

@@ -2,8 +2,8 @@
   Project  : NECTEC IoT Camp 2016
   Compiler : Arduino 1.6.7
   Board    : ESPresso Lite V2
-  Device   : Button
-  Dashboard : -
+  Device   : DHT11, RELAY module
+  Dashboard : DHT_dashboard
   Library : DHT-sensor-library, CMMC_Blink
   Author   : Chiang Mai Maker Club
 *******************************************************************************/
@@ -18,19 +18,23 @@ CMMC_Blink blinker;
 const char* ssid     = "ESPERT-3020";  // Change your ssid wifi 
 const char* password = "espertap";  // Change your password wifi
 
-// NETPIE.io : thing2thing
-#define APPID   "HelloCMMC"             // Change your appID
-#define KEY     "pP9dNKzZXxl0ezB"       // Change your Key
-#define SECRET  "vsPZEfLJCpD2pQfgTu9FXICb5" // Change your SECRET
-#define ALIAS   "thing1"              // Change your name
+// NETPIE.io : lab_device
+#define APPID   "HelloNETPIE"             // Change your appID
+#define KEY     "VrMaS5XpxrMmwVH"       // Change your Key
+#define SECRET  "OdzDsJP8pB7SvBYtbUzjuAZ6G" // Change your SECRET
+#define ALIAS   "lab1"              // Change your name
 
-#define LDR A0
+#define DHTPIN 12
+#define DHTTYPE DHT11
+#define RELAY 14
 
 WiFiClient client;
 MicroGear microgear(client);
+DHT dht(DHTPIN, DHTTYPE);
 
 void init_wifi();
 void init_hardware();
+
 
 void setup() {
   init_wifi();
@@ -43,15 +47,20 @@ void loop() {
   {
     microgear.loop();
 
-    if(analogRead(LDR) > 900)  {
-      delay(200);
-      microgear.chat("thing2", "ON");
-    } else {
-      microgear.chat("thing2", "OFF");
-    }
+    // อ่านค่าจากเซ็นเซอร์ DHt22
+    float t = dht.readTemperature();
+    float h = dht.readHumidity();
     
-    Serial.println(analogRead(LDR));
-    delay(500);
+    // ส่งค่าไปยัง netpie
+    microgear.chat("lab1/Temperature", String(t));
+    microgear.chat("lab1/Humidity", String(h));
+
+    Serial.print("Temperature = ");
+    Serial.print(t);
+    Serial.print("\t");
+    Serial.print("Humidity = ");
+    Serial.println(h);
+    delay(1000);
   }
   else
   {
@@ -98,6 +107,17 @@ void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) {
 
   Serial.print("Topic is ");
   Serial.println(topic);
+
+  if (msgIN == "ON")
+  {
+    digitalWrite(RELAY, LOW);
+    delay(100);
+  }
+  else if (msgIN == "OFF")
+  {
+    digitalWrite(RELAY, HIGH);
+    delay(100);
+  }
 }
 
 /******************* initial loop ***********************************/
@@ -133,5 +153,8 @@ void init_wifi() {
 }
 
 void init_hardware() {
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, LOW);
+  dht.begin();
 }
 
